@@ -2,11 +2,13 @@
 public class PdfDownloaderService : IPdfDownloaderService
 {
     private static readonly HttpClient _httpClient = new HttpClient();
-    public async Task DownloadFileAsync(Rapport pdf, CancellationToken ct)
+    public async Task<string> DownloadFileAsync(Rapport pdf, CancellationToken ct)
     {
         var urlsToTry = new[] { pdf.PdfUrl, pdf.ReportHtmlUrl };
         foreach (var url in urlsToTry.Where(url => !string.IsNullOrWhiteSpace(url)))
         {
+            if (url == null) continue;
+            
             try
             {
                 using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
@@ -22,7 +24,7 @@ public class PdfDownloaderService : IPdfDownloaderService
 
                 await response.Content.CopyToAsync(fs, ct);
 
-                return; // PDF downloaded
+                return url; // PDF downloaded
             }
             catch (OperationCanceledException)
             {

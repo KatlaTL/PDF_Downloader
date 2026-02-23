@@ -1,5 +1,5 @@
 
 public interface IPdfDownloaderService
 {
-    public Task DownloadFileAsync(Rapport pdf, CancellationToken ct);
+    public Task<string> DownloadFileAsync(Rapport pdf, CancellationToken ct);
 }
