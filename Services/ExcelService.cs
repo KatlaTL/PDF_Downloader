@@ -14,9 +14,9 @@ public class ExcelService : IExcelService
 
         for (int row = 2; row <= lastRow; row++)
         {
-            var filename = getCellValue(ws, row, ExcelColumns.FileName);
-            var pdfUrl = getCellValue(ws, row, ExcelColumns.PdfUrl);
-            var reportHtmlUrl = getCellValue(ws, row, ExcelColumns.ReportHtmlUrl);
+            var filename = GetCellValue(ws, row, ExcelColumns.FileName);
+            var pdfUrl = GetCellValue(ws, row, ExcelColumns.PdfUrl);
+            var reportHtmlUrl = GetCellValue(ws, row, ExcelColumns.ReportHtmlUrl);
 
             links.Add(new Rapport
             {
@@ -29,5 +29,5 @@ public class ExcelService : IExcelService
         return links;
     }
 
-    private string getCellValue(IXLWorksheet ws, int row, ExcelColumns enumCol) => ws.Cell(row, enumCol.ColumnNumber()).GetString();
+    private string GetCellValue(IXLWorksheet ws, int row, ExcelColumns enumCol) => ws.Cell(row, enumCol.ColumnNumber()).GetString();
 }
