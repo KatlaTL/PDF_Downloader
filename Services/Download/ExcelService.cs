@@ -1,4 +1,4 @@
-
+using PdfDownloader.Utils;
 using ClosedXML.Excel;
 
 public class ExcelService : IExcelService
@@ -18,11 +18,15 @@ public class ExcelService : IExcelService
             var pdfUrl = GetCellValue(ws, row, ExcelColumns.PdfUrl);
             var reportHtmlUrl = GetCellValue(ws, row, ExcelColumns.ReportHtmlUrl);
 
+            Uri? pdfUri = FileHelpers.ConvertUrlToUri(pdfUrl);
+
+            if (pdfUri == null) continue;
+
             links.Add(new Rapport
             {
                 FileName = filename,
-                PdfUrl = pdfUrl,
-                ReportHtmlUrl = string.IsNullOrWhiteSpace(reportHtmlUrl) ? null : reportHtmlUrl
+                PdfUri = pdfUri,
+                ReportHtmlUri = FileHelpers.ConvertUrlToUri(reportHtmlUrl)
             });
         }
         

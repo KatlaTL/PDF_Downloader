@@ -1,32 +1,47 @@
-﻿// See https://aka.ms/new-console-template for more information
-var ExcelService = new ExcelService();
+﻿using Microsoft.Extensions.DependencyInjection;
 
-var rapports = ExcelService.ReadLinks("GRI_2017_2020.xlsx", 10);
-
-var PdfDownloaderService = new PdfDownloaderService();
-
-List<DownloadResult> downloadResults = new List<DownloadResult>();
-
-foreach (var rapport in rapports)
+class Program
 {
-    try
+    static async Task Main(string[] args)
     {
-        var url = await PdfDownloaderService.DownloadFileAsync(rapport, CancellationToken.None);
+        var services = new ServiceCollection();
 
-        downloadResults.Add(new DownloadResult
+        services.AddSingleton<IExcelService, ExcelService>();
+        services.AddHttpClient<IFileDownloadService, PdfDownloadService>();
+        services.AddSingleton<IStorageService, PdfStorageService>();
+        services.AddSingleton<IPdfDownloadCoordinator, PdfDownloadCoordinator>();
+
+        var serviceProvider = services.BuildServiceProvider();
+
+        var excelService = serviceProvider.GetRequiredService<IExcelService>();
+        var pdfCoordinator = serviceProvider.GetRequiredService<IPdfDownloadCoordinator>();
+
+        var rapports = excelService.ReadLinks("GRI_2017_2020.xlsx", 10);
+
+        List<DownloadResult> downloadResults = new List<DownloadResult>();
+
+        foreach (var rapport in rapports)
         {
-            FileName = rapport.FileName,
-            Url = url,
-            Success = true
-        });
-    }
-    catch (HttpRequestException)
-    {
-        downloadResults.Add(new DownloadResult
-        {
-            FileName = rapport.FileName,
-            Url = string.Empty,
-            Success = false
-        });
+            try
+            {
+                Uri uri = await pdfCoordinator.DownloadAndSaveFileAsync(rapport, CancellationToken.None);
+
+                downloadResults.Add(new DownloadResult
+                {
+                    FileName = rapport.FileName,
+                    Uri = uri,
+                    Success = true
+                });
+            }
+            catch (HttpRequestException)
+            {
+                downloadResults.Add(new DownloadResult
+                {
+                    FileName = rapport.FileName,
+                    Uri = null,
+                    Success = false
+                });
+            }
+        }
     }
 }
