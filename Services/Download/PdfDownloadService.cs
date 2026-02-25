@@ -10,11 +10,7 @@ public class PdfDownloadService : IFileDownloadService
     {
         var response = await _httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, ct);
 
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new HttpRequestException($"Request failed with HTTP status code {response.StatusCode}. " +
-                    $"The status code indicates an error, and it was outside the successful range (200-299).");
-        }
+        response.EnsureSuccessStatusCode();
 
         var contentType = response.Content.Headers.ContentType?.MediaType;
 
@@ -23,6 +19,12 @@ public class PdfDownloadService : IFileDownloadService
             throw new InvalidOperationException($"Unsupported media type: {contentType}. Expected application/pdf.");
         }
 
-        return await response.Content.ReadAsStreamAsync(ct);
+        // Copy the stream to a MemoryStream to get ownership over the stream, to avoid it from being garbage collected or lost in an async flow 
+        var memoryStream = new MemoryStream();
+        await response.Content.CopyToAsync(memoryStream, ct);
+
+        memoryStream.Seek(0, SeekOrigin.Begin);
+
+        return memoryStream;
     }
 }
