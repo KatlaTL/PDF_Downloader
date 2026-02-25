@@ -3,6 +3,11 @@ using ClosedXML.Excel;
 
 public class ClosedXMLService : IExcelService
 {
+    private readonly IFilePathProvider _PathProvider;
+    public ClosedXMLService(IFilePathProvider PathProvider)
+    {
+        _PathProvider = PathProvider;
+    }
     public List<Rapport> ReadLinks(string path, int? rows = null)
     {
         using var wb = new XLWorkbook(path);
@@ -24,18 +29,32 @@ public class ClosedXMLService : IExcelService
             var pdfUrl = xlRow.Cell(pdfUrlCol).GetString().Trim();
             var reportHtmlUrl = xlRow.Cell(htmlUrlCol).GetString().Trim();
 
-            Uri? pdfUri = FileHelpers.ConvertUrlToUri(pdfUrl);
-
-            if (pdfUri == null) continue;
-
             links.Add(new Rapport
             {
                 FileName = filename,
-                PdfUri = pdfUri,
+                PdfUri = FileHelpers.ConvertUrlToUri(pdfUrl),
                 ReportHtmlUri = FileHelpers.ConvertUrlToUri(reportHtmlUrl)
             });
         }
 
         return links;
+    }
+
+    public void ExportToExcel(List<DownloadResult> downloadResults)
+    {
+        using var wb = new XLWorkbook();
+
+        var ws = wb.AddWorksheet("DownloadResults");
+
+        var tableData = downloadResults.Select(r => new
+        {
+            r.FileName,
+            r.Uri,
+            r.Status
+        }).ToList();
+
+        ws.Cell(1, 1).InsertTable(tableData);
+
+        wb.SaveAs(_PathProvider.GetDestinationPathXlsx("DownloadResults"));
     }
 }
