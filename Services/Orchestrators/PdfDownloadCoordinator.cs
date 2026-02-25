@@ -8,9 +8,37 @@ public class PdfDownloadCoordinator : IPdfDownloadCoordinator
         _pdfDownLoadService = pdfDownLoadService;
         _pdfStorageService = pdfStorageService;
     }
-    public async Task<Uri> DownloadAndSaveFileAsync(Rapport pdf, CancellationToken ct)
+
+    public async Task<List<DownloadResult>> DownloadAndSaveFilesAsync(List<Rapport> rapports, CancellationToken ct, int maxConcurrency = 10)
     {
-        var urisToTry = new[] { pdf.PdfUri, pdf.ReportHtmlUri };
+        if (rapports is not { Count: > 0 })
+        {
+            return [];
+        }
+
+        var semaphore = new SemaphoreSlim(maxConcurrency);
+
+        var tasks = rapports.Select(async rapport =>
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                return await DownloadAndSaveFileAsync(rapport, ct);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+
+
+        DownloadResult[] results = await Task.WhenAll(tasks);
+
+        return results.ToList();
+    }
+    public async Task<DownloadResult> DownloadAndSaveFileAsync(Rapport rapport, CancellationToken ct)
+    {
+        var urisToTry = new[] { rapport.PdfUri, rapport.ReportHtmlUri };
         foreach (var uri in urisToTry)
         {
             if (uri == null) continue;
@@ -20,11 +48,17 @@ public class PdfDownloadCoordinator : IPdfDownloadCoordinator
                 // Check if the uri is HTTP or HTTPS 
                 if (FileHelpers.IsHttpOrHttps(uri))
                 {
-                    using Stream stream = await _pdfDownLoadService.DownloadAsync(uri, ct); 
+                    using Stream stream = await _pdfDownLoadService.DownloadAsyncWithRetry(uri, ct);
 
-                    await _pdfStorageService.SaveAsync(pdf.FileName, stream, ct);
+                    await _pdfStorageService.SaveAsync(rapport.FileName, stream, ct);
 
-                    return uri; // PDF downloaded
+                    // PDF downloaded
+                    return new DownloadResult
+                    {
+                        FileName = rapport.FileName,
+                        Uri = uri,
+                        Success = true
+                    };
                 }
                 else
                 {
@@ -42,6 +76,12 @@ public class PdfDownloadCoordinator : IPdfDownloadCoordinator
             }
         }
 
-        throw new HttpRequestException($"Failed to download PDF for {pdf.FileName}");
+        // Download failed
+        return new DownloadResult
+        {
+            FileName = rapport.FileName,
+            Uri = rapport.PdfUri ?? rapport.ReportHtmlUri,
+            Success = false
+        };
     }
 }

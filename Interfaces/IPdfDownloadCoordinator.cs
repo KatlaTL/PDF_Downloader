@@ -1,5 +1,6 @@
 
 public interface IPdfDownloadCoordinator
 {
-    public Task<Uri> DownloadAndSaveFileAsync(Rapport pdf, CancellationToken ct);
+    public Task<List<DownloadResult>> DownloadAndSaveFilesAsync(List<Rapport> rapports, CancellationToken ct, int maxConcurrency = 10);
+    public Task<DownloadResult> DownloadAndSaveFileAsync(Rapport rapport, CancellationToken ct);
 }
