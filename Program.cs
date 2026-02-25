@@ -6,7 +6,7 @@ class Program
     {
         var services = new ServiceCollection();
 
-        services.AddSingleton<IExcelService, ExcelService>();
+        services.AddSingleton<IExcelService, ClosedXMLService>();
         services.AddHttpClient<IFileDownloadService, PdfDownloadService>();
         services.AddSingleton<IStorageService, PdfStorageService>();
         services.AddSingleton<IPdfDownloadCoordinator, PdfDownloadCoordinator>();
@@ -17,20 +17,19 @@ class Program
         var pdfCoordinator = serviceProvider.GetRequiredService<IPdfDownloadCoordinator>();
 
 
-
-
-
+        var sw = Stopwatch.StartNew();
 
         var rapports = excelService.ReadLinks("GRI_2017_2020.xlsx", 100);
 
         List<DownloadResult> downloadResults = new List<DownloadResult>();
 
-        var sw = Stopwatch.StartNew();
         downloadResults = await pdfCoordinator.DownloadAndSaveFilesAsync(rapports, CancellationToken.None, 20);
-        /* foreach (var rapport in rapports)
+
+        foreach (var rapport in rapports)
         {
             downloadResults.Add(await pdfCoordinator.DownloadAndSaveFileAsync(rapport, CancellationToken.None));
-        } */
+        }
+
 
         sw.Stop();
         var process = Process.GetCurrentProcess();

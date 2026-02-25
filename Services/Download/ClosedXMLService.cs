@@ -1,22 +1,28 @@
 using PdfDownloader.Utils;
 using ClosedXML.Excel;
 
-public class ExcelService : IExcelService
+public class ClosedXMLService : IExcelService
 {
     public List<Rapport> ReadLinks(string path, int? rows = null)
     {
-        var links = new List<Rapport>();
         using var wb = new XLWorkbook(path);
 
         var ws = wb.Worksheet(1);
 
+        int fileNameCol = ExcelColumns.FileName.ColumnNumber();
+        int pdfUrlCol = ExcelColumns.PdfUrl.ColumnNumber();
+        int htmlUrlCol = ExcelColumns.ReportHtmlUrl.ColumnNumber();
+
         var lastRow = rows ?? ws.LastRowUsed()?.RowNumber() ?? 0;
+        var links = new List<Rapport>(lastRow);
 
         for (int row = 2; row <= lastRow; row++)
         {
-            var filename = GetCellValue(ws, row, ExcelColumns.FileName);
-            var pdfUrl = GetCellValue(ws, row, ExcelColumns.PdfUrl);
-            var reportHtmlUrl = GetCellValue(ws, row, ExcelColumns.ReportHtmlUrl);
+            var xlRow = ws.Row(row);
+
+            var filename = xlRow.Cell(fileNameCol).GetString().Trim();
+            var pdfUrl = xlRow.Cell(pdfUrlCol).GetString().Trim();
+            var reportHtmlUrl = xlRow.Cell(htmlUrlCol).GetString().Trim();
 
             Uri? pdfUri = FileHelpers.ConvertUrlToUri(pdfUrl);
 
@@ -29,9 +35,7 @@ public class ExcelService : IExcelService
                 ReportHtmlUri = FileHelpers.ConvertUrlToUri(reportHtmlUrl)
             });
         }
-        
+
         return links;
     }
-
-    private string GetCellValue(IXLWorksheet ws, int row, ExcelColumns enumCol) => ws.Cell(row, enumCol.ColumnNumber()).GetString();
 }
