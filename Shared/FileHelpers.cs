@@ -1,4 +1,4 @@
-namespace PdfDownloader.Utils;
+namespace Downloader.shared;
 
 public static class FileHelpers
 {

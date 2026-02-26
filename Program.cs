@@ -1,33 +1,32 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
+using Microsoft.Extensions.Hosting;
 class Program
 {
     static async Task Main(string[] args)
     {
-        var services = new ServiceCollection();
+        var builder = Host.CreateApplicationBuilder(args);
+        builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("App"));
 
-        services.AddHttpClient<IFileDownloadService, PdfDownloadService>();
-        services.AddSingleton<IFilePathProvider, DefaultFilePathProvider>();
-        services.AddSingleton<IExcelService, ClosedXMLService>();
-        services.AddSingleton<IStorageService, PdfStorageService>();
-        services.AddSingleton<IPdfDownloadCoordinator, PdfDownloadCoordinator>();
+        builder.Services.AddSingleton<DownloadReportsUseCase>();
 
-        using var serviceProvider = services.BuildServiceProvider();
+        builder.Services.AddHttpClient<IPdfDownloader, PdfDownloader>();
 
-        var excelService = serviceProvider.GetRequiredService<IExcelService>();
-        var pdfCoordinator = serviceProvider.GetRequiredService<IPdfDownloadCoordinator>();
+        builder.Services.AddSingleton<IPdfPathProvider, PdfPathProvider>();
+        builder.Services.AddSingleton<IXlsxPathProvider, XlsxPathProvider>();
 
+        builder.Services.AddSingleton<IReportSource, ClosedXMLReportSource>();
+        builder.Services.AddSingleton<IResultExporter, ClosedXMLResultExporter>();
+
+        builder.Services.AddSingleton<IStorageService, PdfStorageService>();
 
         var sw = Stopwatch.StartNew();
 
-        var rapports = excelService.ReadLinks("GRI_2017_2020.xlsx", 10);
+        using var serviceProvider = builder.Services.BuildServiceProvider();
 
-        List<DownloadResult> downloadResults;
+        var useCase = serviceProvider.GetRequiredService<DownloadReportsUseCase>();
 
-        downloadResults = await pdfCoordinator.DownloadAndSaveFilesAsync(rapports, CancellationToken.None, 20);
-
-        excelService.ExportToExcel(downloadResults);
-
+        await useCase.ExecuteAsync(CancellationToken.None);
 
         sw.Stop();
         var process = Process.GetCurrentProcess();

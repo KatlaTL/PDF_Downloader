@@ -1,14 +1,9 @@
-using PdfDownloader.Utils;
+using Downloader.shared;
 using ClosedXML.Excel;
 
-public class ClosedXMLService : IExcelService
+public class ClosedXMLReportSource : IReportSource
 {
-    private readonly IFilePathProvider _PathProvider;
-    public ClosedXMLService(IFilePathProvider PathProvider)
-    {
-        _PathProvider = PathProvider;
-    }
-    public List<Rapport> ReadLinks(string path, int? rows = null)
+    public IReadOnlyCollection<Report> ReadLinks(string path, int? rows)
     {
         using var wb = new XLWorkbook(path);
 
@@ -19,7 +14,7 @@ public class ClosedXMLService : IExcelService
         int htmlUrlCol = ExcelColumns.ReportHtmlUrl.ColumnNumber();
 
         var lastRow = rows ?? ws.LastRowUsed()?.RowNumber() ?? 0;
-        var links = new List<Rapport>(lastRow);
+        var links = new List<Report>(lastRow);
 
         for (int row = 2; row <= lastRow; row++)
         {
@@ -29,7 +24,7 @@ public class ClosedXMLService : IExcelService
             var pdfUrl = xlRow.Cell(pdfUrlCol).GetString().Trim();
             var reportHtmlUrl = xlRow.Cell(htmlUrlCol).GetString().Trim();
 
-            links.Add(new Rapport
+            links.Add(new Report
             {
                 FileName = filename,
                 PdfUri = FileHelpers.ConvertUrlToUri(pdfUrl),
@@ -38,23 +33,5 @@ public class ClosedXMLService : IExcelService
         }
 
         return links;
-    }
-
-    public void ExportToExcel(List<DownloadResult> downloadResults)
-    {
-        using var wb = new XLWorkbook();
-
-        var ws = wb.AddWorksheet("DownloadResults");
-
-        var tableData = downloadResults.Select(r => new
-        {
-            r.FileName,
-            r.Uri,
-            r.Status
-        }).ToList();
-
-        ws.Cell(1, 1).InsertTable(tableData);
-
-        wb.SaveAs(_PathProvider.GetDestinationPathXlsx("DownloadResults"));
     }
 }
