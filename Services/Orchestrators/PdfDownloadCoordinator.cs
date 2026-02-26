@@ -20,7 +20,7 @@ public class PdfDownloadCoordinator : IPdfDownloadCoordinator
 
         var tasks = rapports.Select(async rapport =>
         {
-            await semaphore.WaitAsync();
+            await semaphore.WaitAsync(ct);
             try
             {
                 return await DownloadAndSaveFileAsync(rapport, ct);
