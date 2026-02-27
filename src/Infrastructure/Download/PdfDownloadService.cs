@@ -1,11 +1,11 @@
 using Downloader.FileSystem;
-public class PdfDownloader : IPdfDownloader
+public class PdfDownloadService : IPdfDownloadService
 {
     private readonly HttpClient _httpClient;
     private readonly int _maxRetries;
     private readonly TimeSpan _delay;
 
-    public PdfDownloader(HttpClient httpClient, int maxRetries = 3, TimeSpan? delay = null)
+    public PdfDownloadService(HttpClient httpClient, int maxRetries = 3, TimeSpan? delay = null)
     {
         _httpClient = httpClient;
         _maxRetries = maxRetries;

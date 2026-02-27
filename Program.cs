@@ -10,7 +10,7 @@ class Program
 
         builder.Services.AddSingleton<DownloadReportsUseCase>();
 
-        builder.Services.AddHttpClient<IPdfDownloader, PdfDownloader>();
+        builder.Services.AddHttpClient<IPdfDownloadService, PdfDownloadService>();
 
         builder.Services.AddSingleton<IPdfPathProvider, PdfPathProvider>();
         builder.Services.AddSingleton<IXlsxPathProvider, XlsxPathProvider>();

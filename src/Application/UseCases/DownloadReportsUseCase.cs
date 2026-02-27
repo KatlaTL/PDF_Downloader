@@ -3,13 +3,13 @@ using Microsoft.Extensions.Options;
 public class DownloadReportsUseCase
 {
     private readonly IReportSource _reportSource;
-    private readonly IPdfDownloader _downloader;
+    private readonly IPdfDownloadService _downloader;
     private readonly IStorageService _storage;
     private readonly IResultExporter _exporter;
     private readonly AppSettings _settings;
     public DownloadReportsUseCase(
         IReportSource reportSource,
-        IPdfDownloader downloader,
+        IPdfDownloadService downloader,
         IStorageService storage,
         IResultExporter exporter,
         IOptions<AppSettings> settings)
