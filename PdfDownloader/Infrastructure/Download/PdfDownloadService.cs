@@ -11,9 +11,9 @@ public class PdfDownloadService : IPdfDownloadService
         _maxRetries = maxRetries;
         _delay = delay ?? TimeSpan.FromSeconds(2);
     }
-    public async Task<DownloadResult> DownloadAsync(Report reports, CancellationToken ct)
+    public async Task<DownloadResult> DownloadAsync(Report report, CancellationToken ct)
     {
-        var urisToTry = new[] { reports.PdfUri, reports.ReportHtmlUri };
+        var urisToTry = new[] { report.PdfUri, report.ReportHtmlUri };
 
         foreach (var uri in urisToTry)
         {
@@ -46,7 +46,7 @@ public class PdfDownloadService : IPdfDownloadService
                     // PDF downloaded
                     return new DownloadResult
                     {
-                        FileName = reports.FileName,
+                        FileName = report.FileName,
                         Uri = uri,
                         Success = true,
                         Stream = memoryStream
@@ -72,8 +72,8 @@ public class PdfDownloadService : IPdfDownloadService
         // Download failed
         return new DownloadResult
         {
-            FileName = reports.FileName,
-            Uri = reports.PdfUri ?? reports.ReportHtmlUri,
+            FileName = report.FileName,
+            Uri = report.PdfUri ?? report.ReportHtmlUri,
             Success = false
         };
     }

@@ -96,7 +96,7 @@ public class DownloadReportsUseCaseTests
             });
 
         await _useCase.ExecuteAsync(CancellationToken.None);
-        
+
         _storageMock
             .Verify(x => x.SaveAsync("r1", It.Is<MemoryStream>(s => s.Length == 0), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -119,8 +119,42 @@ public class DownloadReportsUseCaseTests
             });
 
         await _useCase.ExecuteAsync(CancellationToken.None);
-        
+
         _storageMock
             .Verify(x => x.SaveAsync("r1", It.Is<MemoryStream>(s => s.Length == 0), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_Call_Exporter_With_Results()
+    {
+        var testReports = new List<Report>
+        {
+            new (){ FileName = "r1", PdfUri = null},
+            new (){ FileName = "r2", PdfUri = null},
+            new (){ FileName = "r3", PdfUri = null},
+        };
+
+        _reportSourceMock
+            .Setup(x => x.ReadLinks(It.IsAny<string>(), It.IsAny<int>()))
+            .Returns(testReports);
+
+        _downloaderMock
+            .Setup(x => x.DownloadAsync(It.IsAny<Report>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Report report, CancellationToken ct) => new DownloadResult
+            {
+                FileName = report.FileName,
+                Success = true,
+                Stream = new MemoryStream(),
+                Uri = null
+            });
+
+        _storageMock
+            .Setup(x => x.SaveAsync(It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        await _useCase.ExecuteAsync(CancellationToken.None);
+
+        _exporterMock
+            .Verify(x => x.ExportAsync(It.Is<List<DownloadResult>>(r => r.Count == 3)), Times.Once);
     }
 }
