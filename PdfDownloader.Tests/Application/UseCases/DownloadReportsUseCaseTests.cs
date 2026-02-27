@@ -125,6 +125,29 @@ public class DownloadReportsUseCaseTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_Should_Not_Save_When_Stream_Is_Null()
+    {
+        _reportSourceMock
+           .Setup(x => x.ReadLinks(It.IsAny<string>(), It.IsAny<int>()))
+           .Returns(new List<Report>() { new() { FileName = "r1", PdfUri = null } });
+
+        _downloaderMock
+            .Setup(x => x.DownloadAsync(It.IsAny<Report>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Report report, CancellationToken ct) => new DownloadResult
+            {
+                FileName = report.FileName,
+                Success = true,
+                Stream = null,
+                Uri = null
+            });
+
+        await _useCase.ExecuteAsync(CancellationToken.None);
+
+        _storageMock
+            .Verify(x => x.SaveAsync("r1", It.Is<MemoryStream>(s => s.Length == 0), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_Should_Call_Exporter_With_Results()
     {
         var testReports = new List<Report>
