@@ -23,7 +23,7 @@ public class DownloadReportsUseCase
 
     public async Task ExecuteAsync(CancellationToken ct)
     {
-        var reports = _reportSource.ReadLinks(_settings.InputExcelPath, 20);
+        var reports = _reportSource.ReadLinks(_settings.InputExcelPath, _settings.MaxRows);
 
         var results = await ProcessReportsAsync(reports, ct);
 
