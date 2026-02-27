@@ -1,4 +1,4 @@
-using Downloader.shared;
+using Downloader.FileSystem;
 public class PdfDownloader : IPdfDownloader
 {
     private readonly HttpClient _httpClient;

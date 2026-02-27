@@ -1,4 +1,4 @@
-namespace Downloader.shared;
+namespace Downloader.FileSystem;
 
 public static class FileHelpers
 {

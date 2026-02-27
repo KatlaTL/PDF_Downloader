@@ -1,4 +1,4 @@
-using Downloader.shared;
+using Downloader.FileSystem;
 using ClosedXML.Excel;
 using Microsoft.Extensions.Options;
 
