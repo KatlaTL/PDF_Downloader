@@ -63,7 +63,6 @@ public class PdfDownloadService : IPdfDownloadService
                 }
                 catch (Exception ex)
                 {
-                    // Log the exception for further investigation
                     Console.WriteLine($"Error downloading file: {ex.Message}");
                 }
             }
@@ -83,15 +82,15 @@ public class PdfDownloadService : IPdfDownloadService
         if (ex.StatusCode.HasValue)
         {
             int code = (int)ex.StatusCode.Value;
-            // Retry only on 5xx server errors
+            // Retry on 5xx server errors
             if (code >= 500 && code <= 599)
                 return true;
         }
 
-        // Check for network-level errors or timeout exceptions
+        // Retry if network-level errors or timeout exceptions
         if (ex.InnerException is TimeoutException)
             return true;
 
-        return false; // everything else (403, 404, 400) is permanent
+        return false; // everything else (403, 404, 400) is permanent and should not be retried
     }
 }
